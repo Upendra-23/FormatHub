@@ -1,4 +1,4 @@
-export type AppSection = 'formatter' | 'converter';
+export type AppSection = 'formatter' | 'converter' | 'diff';
 
 export type FormatType =
   | 'json' | 'xml' | 'sql' | 'html'
@@ -109,6 +109,12 @@ export const NAV_CATEGORIES: NavCategory[] = [
       { label: 'YAML to JSON Converter', value: 'yaml-to-json', section: 'converter' },
       { label: 'JSON to YAML Converter', value: 'json-to-yaml', section: 'converter' },
       { label: 'Properties to YAML Converter', value: 'properties-to-yaml', section: 'converter' },
+    ],
+  },
+  {
+    label: 'Tools',
+    items: [
+      { label: 'File Compare', value: 'diff', section: 'diff' },
     ],
   },
 ];

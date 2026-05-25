@@ -26,6 +26,7 @@ const FORMAT_ICONS: Record<string, string> = {
   'yaml-to-json': 'Y>J',
   'json-to-yaml': 'J>Y',
   'properties-to-yaml': 'P>Y',
+  diff: '<>',
 };
 
 export function Sidebar({ activeFormat, onSelect, collapsed }: Props) {

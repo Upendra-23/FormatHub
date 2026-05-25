@@ -6,6 +6,7 @@ import { CommandPalette } from './components/CommandPalette';
 import { Header } from './components/Layout/Header';
 import { Sidebar } from './components/Layout/Sidebar';
 import { ToolPage } from './components/ToolPage/ToolPage';
+import { DiffView } from './components/DiffView/DiffView';
 import { Footer } from './components/Footer/Footer';
 import { NAV_CATEGORIES } from './types';
 import type { FormatType, AppSection, ConverterId } from './types';
@@ -58,7 +59,7 @@ export default function App() {
     const sec = deriveSection(id);
     if (sec === 'converter') {
       setConverterId(id as ConverterId);
-    } else {
+    } else if (sec !== 'diff') {
       setFormat(id as FormatType);
     }
     setInput(DEFAULT_SAMPLES[id] || '');
@@ -73,8 +74,8 @@ export default function App() {
   }, [setInput]);
 
   useEffect(() => {
-    process();
-  }, [process]);
+    if (section !== 'diff') process();
+  }, [process, section]);
 
   useEffect(() => {
     if (!fullscreen) return;
@@ -105,8 +106,9 @@ export default function App() {
     }))
   );
 
-  const lineCount = input ? input.split('\n').length : 0;
-  const charCount = input.length;
+  const isDiff = section === 'diff';
+  const lineCount = isDiff ? 0 : (input ? input.split('\n').length : 0);
+  const charCount = isDiff ? 0 : input.length;
 
   return (
     <div className={`app${fullscreen ? ' fullscreen' : ''}`}>
@@ -125,26 +127,30 @@ export default function App() {
         <Sidebar activeFormat={toolId} onSelect={handleToolChange} collapsed={false} />
         <main className="main-content">
           <div className="main-inner">
-            <ToolPage
-              format={section === 'converter' ? 'json' : format}
-              section={section}
-              converterId={converterId}
-              input={input}
-              output={output}
-              mode={mode}
-              errors={errors}
-              formatError={formatError}
-              sqlDialect={sqlDialect}
-              encodeDecodeMode={encodeDecodeMode}
-              monacoTheme={monacoTheme}
-              onInputChange={setInput}
-              onModeChange={setMode}
-              onSqlDialectChange={setSqlDialect}
-              onEncodeDecodeModeChange={setEncodeDecodeMode}
-              fullscreen={fullscreen}
-              onToggleFullscreen={() => setFullscreen(f => !f)}
-              onClear={clearAll}
-            />
+            {isDiff ? (
+              <DiffView monacoTheme={monacoTheme} fullscreen={fullscreen} onToggleFullscreen={() => setFullscreen(f => !f)} />
+            ) : (
+              <ToolPage
+                format={section === 'converter' ? 'json' : format}
+                section={section}
+                converterId={converterId}
+                input={input}
+                output={output}
+                mode={mode}
+                errors={errors}
+                formatError={formatError}
+                sqlDialect={sqlDialect}
+                encodeDecodeMode={encodeDecodeMode}
+                monacoTheme={monacoTheme}
+                onInputChange={setInput}
+                onModeChange={setMode}
+                onSqlDialectChange={setSqlDialect}
+                onEncodeDecodeModeChange={setEncodeDecodeMode}
+                fullscreen={fullscreen}
+                onToggleFullscreen={() => setFullscreen(f => !f)}
+                onClear={clearAll}
+              />
+            )}
           </div>
         </main>
       </div>
@@ -153,6 +159,7 @@ export default function App() {
         mode={mode}
         lineCount={lineCount}
         charCount={charCount}
+        section={section}
       />
     </div>
   );

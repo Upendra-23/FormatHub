@@ -1163,7 +1163,8 @@
 .app.fullscreen .tool-header,
 .app.fullscreen .toolbar,
 .app.fullscreen .tool-format-error,
-.app.fullscreen .diagnostics-panel {
+.app.fullscreen .diagnostics-panel,
+.app.fullscreen .diff-toolbar {
   display: none;
 }
 
@@ -1266,4 +1267,195 @@
 .diagnostics-body::-webkit-scrollbar-thumb {
   background: var(--border-subtle);
   border-radius: 2px;
+}
+
+/* ═══════════════════════════════════════════════
+   DIFF VIEW
+   ═══════════════════════════════════════════════ */
+
+.diff-view {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+  overflow: hidden;
+  animation: fadeIn 0.3s ease;
+}
+
+.diff-toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.diff-source-group {
+  display: flex;
+  gap: 12px;
+}
+
+.diff-source {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.diff-source-label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-tertiary);
+}
+
+.diff-source-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.diff-textarea {
+  flex: 1;
+  min-height: 80px;
+  max-height: 120px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.5;
+  resize: vertical;
+  outline: none;
+  transition: border-color var(--transition-fast);
+}
+
+.diff-textarea:focus {
+  border-color: var(--border-active);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.diff-textarea::placeholder {
+  color: var(--text-tertiary);
+}
+
+.diff-textarea::-webkit-resizer {
+  border: 2px solid var(--border-default);
+}
+
+.diff-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--surface-glass);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.diff-editor-container {
+  flex: 1;
+  min-height: 0;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  position: relative;
+  background: var(--surface-glass);
+}
+
+.diff-editor-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 16px;
+  color: var(--text-tertiary);
+}
+
+.diff-placeholder-icon {
+  font-size: 48px;
+  opacity: 0.3;
+}
+
+.diff-placeholder-text {
+  font-size: 14px;
+  opacity: 0.6;
+}
+
+.diff-editor-container .monaco-editor {
+  --vscode-editor-background: transparent !important;
+}
+
+.diff-editor-container .monaco-editor .margin {
+  --vscode-editorGutter-background: transparent !important;
+}
+
+.diff-editor-container .monaco-editor .monaco-editor-background {
+  background: transparent !important;
+}
+
+.diff-editor-container .monaco-diff-editor .diffOverview {
+  background: var(--surface-glass) !important;
+}
+
+/* Diff colors - dark theme overrides */
+[data-theme="dark"] .diff-editor-container .monaco-diff-editor .diff-added-line {
+  background: rgba(16, 185, 129, 0.15) !important;
+}
+
+[data-theme="dark"] .diff-editor-container .monaco-diff-editor .diff-removed-line {
+  background: rgba(239, 68, 68, 0.15) !important;
+}
+
+[data-theme="dark"] .diff-editor-container .monaco-diff-editor .diff-hidden-lines {
+  background: var(--bg-tertiary) !important;
+}
+
+[data-theme="dark"] .diff-editor-container .monaco-diff-editor .line-delete,
+[data-theme="dark"] .diff-editor-container .monaco-diff-editor .char-delete {
+  background: rgba(239, 68, 68, 0.2) !important;
+}
+
+[data-theme="dark"] .diff-editor-container .monaco-diff-editor .line-insert,
+[data-theme="dark"] .diff-editor-container .monaco-diff-editor .char-insert {
+  background: rgba(16, 185, 129, 0.2) !important;
+}
+
+/* Diff colors - light theme overrides */
+[data-theme="light"] .diff-editor-container .monaco-diff-editor .diff-added-line {
+  background: rgba(5, 150, 105, 0.1) !important;
+}
+
+[data-theme="light"] .diff-editor-container .monaco-diff-editor .diff-removed-line {
+  background: rgba(220, 38, 38, 0.1) !important;
+}
+
+[data-theme="light"] .diff-editor-container .monaco-diff-editor .diff-hidden-lines {
+  background: var(--bg-tertiary) !important;
+}
+
+[data-theme="light"] .diff-editor-container .monaco-diff-editor .line-delete,
+[data-theme="light"] .diff-editor-container .monaco-diff-editor .char-delete {
+  background: rgba(220, 38, 38, 0.15) !important;
+}
+
+[data-theme="light"] .diff-editor-container .monaco-diff-editor .line-insert,
+[data-theme="light"] .diff-editor-container .monaco-diff-editor .char-insert {
+  background: rgba(5, 150, 105, 0.15) !important;
+}
+
+/* Fullscreen override for diff */
+.app.fullscreen .diff-editor-container {
+  border-radius: 0;
+  border: none;
+}
+
+.app.fullscreen .diff-actions {
+  display: none;
 }
