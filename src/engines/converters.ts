@@ -212,6 +212,36 @@ export async function convertContent(
         return { output: yaml.dump(doc, { indent: 2, lineWidth: -1, noRefs: true }), error: null };
       }
 
+      case 'properties-to-yaml': {
+        const lines = input.split('\n');
+        const result: Record<string, unknown> = {};
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith('!')) continue;
+          const eqIdx = trimmed.indexOf('=');
+          const colonIdx = trimmed.indexOf(':');
+          const spaceIdx = trimmed.indexOf(' ');
+          let sepIdx = -1;
+          if (eqIdx >= 0) sepIdx = eqIdx;
+          else if (colonIdx >= 0) sepIdx = colonIdx;
+          else if (spaceIdx >= 0) sepIdx = spaceIdx;
+          if (sepIdx < 0) continue;
+          const key = trimmed.slice(0, sepIdx).trim();
+          const value = trimmed.slice(sepIdx + 1).trim();
+          const parts = key.split('.');
+          let current = result;
+          for (let j = 0; j < parts.length - 1; j++) {
+            const part = parts[j];
+            if (!(part in current)) {
+              current[part] = {};
+            }
+            current = current[part] as Record<string, unknown>;
+          }
+          current[parts[parts.length - 1]] = value;
+        }
+        return { output: yaml.dump(result, { indent: 2, lineWidth: -1, noRefs: true }), error: null };
+      }
+
       default:
         return { output: input, error: 'Unknown converter' };
     }

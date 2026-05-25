@@ -138,6 +138,40 @@ export async function formatContent(
           return { output: input, error: `Cannot decode Base64: ${e instanceof Error ? e.message : String(e)}` };
         }
       }
+      case 'properties': {
+        const lines = input.split('\n');
+        const entries: { key: string; value: string; comment: string; index: number }[] = [];
+        let currentComment = '';
+        for (let i = 0; i < lines.length; i++) {
+          const raw = lines[i];
+          const trimmed = raw.trim();
+          if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith('!')) {
+            currentComment += (currentComment ? '\n' : '') + raw;
+            continue;
+          }
+          const eqIdx = trimmed.indexOf('=');
+          const colonIdx = trimmed.indexOf(':');
+          const spaceIdx = trimmed.indexOf(' ');
+          let sepIdx = -1;
+          if (eqIdx >= 0) sepIdx = eqIdx;
+          else if (colonIdx >= 0) sepIdx = colonIdx;
+          else if (spaceIdx >= 0) sepIdx = spaceIdx;
+          if (sepIdx < 0) {
+            entries.push({ key: trimmed, value: '', comment: currentComment, index: i });
+          } else {
+            const key = trimmed.slice(0, sepIdx).trim();
+            const value = trimmed.slice(sepIdx + 1).trim();
+            entries.push({ key, value, comment: currentComment, index: i });
+          }
+          currentComment = '';
+        }
+        entries.sort((a, b) => a.key.localeCompare(b.key));
+        const result = entries.map(e => {
+          const comment = e.comment ? e.comment + '\n' : '';
+          return `${comment}${e.key} = ${e.value}`;
+        }).join('\n');
+        return { output: result, error: null };
+      }
       case 'url': {
         if (encodeDecodeMode === 'encode') {
           return { output: encodeURIComponent(input), error: null };

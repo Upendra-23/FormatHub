@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { NAV_CATEGORIES } from '../../types';
 
 interface Props {
@@ -7,43 +6,48 @@ interface Props {
   collapsed: boolean;
 }
 
+const FORMAT_ICONS: Record<string, string> = {
+  json: '{ }',
+  xml: '</>',
+  html: '<!>',
+  sql: 'SQL',
+  javascript: 'JS',
+  css: '#CSS',
+  markdown: 'MD',
+  base64: 'B64',
+  url: 'URL',
+  yaml: 'YML',
+  csv: 'CSV',
+  properties: 'PRP',
+  'xml-to-json': 'X>J',
+  'json-to-xml': 'J>X',
+  'csv-to-json': 'C>J',
+  'json-to-csv': 'J>C',
+  'yaml-to-json': 'Y>J',
+  'json-to-yaml': 'J>Y',
+  'properties-to-yaml': 'P>Y',
+};
+
 export function Sidebar({ activeFormat, onSelect, collapsed }: Props) {
-  const [collapsedCategories, setCollapsed] = useState<Record<string, boolean>>({});
-
-  const toggleCategory = (label: string) => {
-    setCollapsed(prev => ({ ...prev, [label]: !prev[label] }));
-  };
-
   return (
     <aside className={`sidebar${collapsed ? ' collapsed' : ''}`}>
       <div className="sidebar-inner">
-        {NAV_CATEGORIES.map(cat => {
-          const isCatCollapsed = collapsedCategories[cat.label];
-          return (
-            <div key={cat.label} className="sidebar-category">
+        {NAV_CATEGORIES.map(cat => (
+          <div key={cat.label}>
+            <div className="sidebar-section-label">{cat.label}</div>
+            {cat.items.map(item => (
               <button
-                className="sidebar-category-header"
-                onClick={() => toggleCategory(cat.label)}
+                key={`${item.value}-${item.section}`}
+                className={`sidebar-item ${activeFormat === item.value ? 'active' : ''}`}
+                onClick={() => onSelect(item.value)}
               >
-                <span className={`sidebar-arrow ${isCatCollapsed ? '' : 'expanded'}`}>&#9654;</span>
-                <span className="sidebar-category-label">{cat.label}</span>
+                <span className="sidebar-item-icon">{FORMAT_ICONS[item.value] || '?'}</span>
+                <span>{item.label}</span>
               </button>
-              {!isCatCollapsed && (
-                <div className="sidebar-items">
-                  {cat.items.map(item => (
-                    <button
-                      key={`${item.value}-${item.section}`}
-                      className={`sidebar-item ${activeFormat === item.value ? 'active' : ''}`}
-                      onClick={() => onSelect(item.value)}
-                    >
-                      {item.label}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
+            ))}
+            <div className="sidebar-divider" />
+          </div>
+        ))}
       </div>
     </aside>
   );

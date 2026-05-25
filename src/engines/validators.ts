@@ -460,6 +460,42 @@ function validateCSS(input: string): ValidationError[] {
   return errors;
 }
 
+function validateProperties(input: string): ValidationError[] {
+  const errors: ValidationError[] = [];
+  const lines = input.split('\n');
+  const seenKeys = new Map<string, number>();
+
+  for (let i = 0; i < lines.length; i++) {
+    const trimmed = lines[i].trim();
+    if (!trimmed || trimmed.startsWith('#') || trimmed.startsWith('!')) continue;
+
+    const eqIdx = trimmed.indexOf('=');
+    const colonIdx = trimmed.indexOf(':');
+    const spaceIdx = trimmed.indexOf(' ');
+    let sepIdx = -1;
+    if (eqIdx >= 0) sepIdx = eqIdx;
+    else if (colonIdx >= 0) sepIdx = colonIdx;
+    else if (spaceIdx >= 0) sepIdx = spaceIdx;
+
+    if (sepIdx < 0) {
+      if (/[a-zA-Z.]/.test(trimmed[0])) {
+        errors.push({ line: i + 1, column: trimmed.length + 1, message: `Missing value for key '${trimmed}'`, length: 1 });
+      } else if (trimmed.length > 0) {
+        errors.push({ line: i + 1, column: 1, message: `Malformed line — expected key=value format`, length: 1 });
+      }
+      continue;
+    }
+
+    const key = trimmed.slice(0, sepIdx).trim();
+    if (seenKeys.has(key)) {
+      errors.push({ line: i + 1, column: 1, message: `Duplicate key '${key}' (first seen at line ${seenKeys.get(key)})`, length: key.length });
+    }
+    seenKeys.set(key, i + 1);
+  }
+
+  return errors;
+}
+
 async function validateJavaScript(input: string): Promise<ValidationError[]> {
   const usesModuleSyntax = /\b(import\s+[\s\S]*?from\s+['"`]|export\s+(default\s+)?(class|function|const|let|var|interface|type|enum|namespace|abstract)\b|import\s*\(|\bimport\s+['"`])/.test(input);
 
@@ -523,6 +559,7 @@ export async function validateContent(input: string, format: FormatType): Promis
     case 'css': return validateCSS(input);
     case 'javascript': return validateJavaScript(input);
     case 'markdown': return [];
+    case 'properties': return validateProperties(input);
     case 'base64': return [];
     case 'url': return [];
     default: return [];

@@ -2,7 +2,8 @@ import { useRef, useEffect, useCallback, useState } from 'react';
 import Editor from '@monaco-editor/react';
 import type { OnMount, Monaco } from '@monaco-editor/react';
 import type { FormatType, ValidationError, SQLDialect, EncodeDecodeMode, ActionMode, AppSection, ConverterId } from '../../types';
-import { FORMATS, TOOL_DESCRIPTIONS, CONVERTER_DESCRIPTIONS, CONVERTERS } from '../../types';
+import { FORMATS, CONVERTERS } from '../../types';
+import { CustomSelect } from '../CustomSelect';
 
 interface Props {
   format: FormatType;
@@ -54,6 +55,7 @@ export function ToolPage({
   const syncing = useRef(false);
   const editorsRef = useRef<HTMLDivElement>(null);
   const [leftRatio, setLeftRatio] = useState(0.5);
+  const [showDiagnostics, setShowDiagnostics] = useState(true);
 
   const onResizerPointerDown = useCallback((e: React.PointerEvent) => {
     const container = editorsRef.current;
@@ -80,9 +82,6 @@ export function ToolPage({
   const isConverter = section === 'converter';
   const converterDef = isConverter ? CONVERTERS.find(c => c.id === converterId) : null;
   const fmt = FORMATS.find(f => f.value === format)!;
-  const desc = isConverter && converterDef
-    ? CONVERTER_DESCRIPTIONS[converterDef.id]
-    : TOOL_DESCRIPTIONS[format as keyof typeof TOOL_DESCRIPTIONS] || { title: '', description: '' };
   const inputLang = isConverter && converterDef ? converterDef.fromFormat : (fmt?.language || 'plaintext');
   const outputLang = isConverter && converterDef ? converterDef.toFormat : (fmt?.language || 'plaintext');
   const inputLabel = isConverter && converterDef ? converterDef.fromLabel : 'Input';
@@ -92,6 +91,9 @@ export function ToolPage({
   const isUrl = !isConverter && format === 'url';
   const isSql = !isConverter && format === 'sql';
   const isMarkdown = !isConverter && format === 'markdown';
+
+
+  const hasContent = input.trim().length > 0;
 
   const syncScrollToPreview = useCallback(() => {
     const editor = editorRef.current;
@@ -111,9 +113,30 @@ export function ToolPage({
     syncing.current = false;
   }, []);
 
+  const langRegistered = useRef(false);
+
+  const ensurePropertiesLang = useCallback((monaco: Monaco) => {
+    if (langRegistered.current) return;
+    langRegistered.current = true;
+
+    monaco.languages.register({ id: 'properties' });
+
+    monaco.languages.setMonarchTokensProvider('properties', {
+      tokenizer: {
+        root: [
+          [/^[ \t]*[#!].*$/, 'comment'],
+          [/^([a-zA-Z0-9_.-]+)(\s*)([=: ])(\s*)(.*)$/, ['keyword', 'white', 'delimiter', 'white', 'string']],
+          [/^([a-zA-Z0-9_.-]+)$/, 'keyword'],
+        ],
+      },
+    });
+  }, []);
+
   const handleMount: OnMount = (editor, monaco) => {
     editorRef.current = editor;
     monacoRef.current = monaco;
+
+    ensurePropertiesLang(monaco);
 
     editor.onDidChangeModelContent(() => {
       onInputChange(editor.getValue());
@@ -212,7 +235,7 @@ export function ToolPage({
     const extMap: Record<string, string> = {
       json: 'json', xml: 'xml', sql: 'sql',
       html: 'html', css: 'css', javascript: 'js',
-      base64: 'txt', url: 'txt', yaml: 'yml', csv: 'csv',
+      base64: 'txt', url: 'txt', yaml: 'yml', csv: 'csv', properties: 'properties',
     };
     const targetFormat = isConverter && converterDef ? converterDef.toFormat : format;
     const ext = extMap[targetFormat] || 'txt';
@@ -241,98 +264,131 @@ export function ToolPage({
     e.target.value = '';
   };
 
+  const hasErrors = errors.length > 0;
+  const hasValidOutput = hasContent && !hasErrors && output.length > 0 && !formatError;
+
   return (
     <div className="tool-page">
-      <div className="tool-header">
-        <h1 className="tool-title">{desc.title}</h1>
-        <p className="tool-description">{desc.description}</p>
-      </div>
-
-      <div className="tool-options-bar">
+      <div className="toolbar">
         {isSql && (
-          <div className="option-group">
-            <label className="option-label">Dialect:</label>
-            <select
-              className="option-select"
-              value={sqlDialect}
-              onChange={e => onSqlDialectChange(e.target.value as SQLDialect)}
-            >
-              <option value="mysql">MySQL</option>
-              <option value="postgresql">PostgreSQL</option>
-              <option value="oracle">Oracle</option>
-              <option value="sqlserver">SQL Server</option>
-            </select>
-          </div>
+          <>
+                <div className="toolbar-group">
+                  <span className="toolbar-label">Dialect</span>
+                  <CustomSelect
+                    value={sqlDialect}
+                    options={[
+                      { value: 'mysql', label: 'MySQL' },
+                      { value: 'postgresql', label: 'PostgreSQL' },
+                      { value: 'oracle', label: 'Oracle' },
+                      { value: 'sqlserver', label: 'SQL Server' },
+                    ]}
+                    onChange={onSqlDialectChange}
+                  />
+                </div>
+            <div className="toolbar-divider" />
+          </>
         )}
 
         {!isConverter && fmt.supportsFormat && fmt.supportsMinify && (
-          <div className="option-group">
-            <label className="option-label">Mode:</label>
-            <div className="option-toggle">
-              <button
-                className={`toggle-btn ${mode === 'format' ? 'active' : ''}`}
-                onClick={() => onModeChange('format')}
-              >
-                Format
-              </button>
-              <button
-                className={`toggle-btn ${mode === 'minify' ? 'active' : ''}`}
-                onClick={() => onModeChange('minify')}
-              >
-                Minify
-              </button>
+          <>
+            <div className="toolbar-group">
+              <span className="toolbar-label">Mode</span>
+              <div className="toolbar-toggle">
+                <button
+                  className={`toolbar-toggle-btn ${mode === 'format' ? 'active' : ''}`}
+                  onClick={() => onModeChange('format')}
+                >
+                  Format
+                </button>
+                <button
+                  className={`toolbar-toggle-btn ${mode === 'minify' ? 'active' : ''}`}
+                  onClick={() => onModeChange('minify')}
+                >
+                  Minify
+                </button>
+              </div>
             </div>
-          </div>
+            <div className="toolbar-divider" />
+          </>
         )}
 
         {(isBase64 || isUrl) && (
-          <div className="option-group">
-            <label className="option-label">Action:</label>
-            <div className="option-toggle">
-              <button
-                className={`toggle-btn ${encodeDecodeMode === 'encode' ? 'active' : ''}`}
-                onClick={() => onEncodeDecodeModeChange('encode')}
-              >
-                Encode
-              </button>
-              <button
-                className={`toggle-btn ${encodeDecodeMode === 'decode' ? 'active' : ''}`}
-                onClick={() => onEncodeDecodeModeChange('decode')}
-              >
-                Decode
-              </button>
+          <>
+            <div className="toolbar-group">
+              <span className="toolbar-label">Action</span>
+              <div className="toolbar-toggle">
+                <button
+                  className={`toolbar-toggle-btn ${encodeDecodeMode === 'encode' ? 'active' : ''}`}
+                  onClick={() => onEncodeDecodeModeChange('encode')}
+                >
+                  Encode
+                </button>
+                <button
+                  className={`toolbar-toggle-btn ${encodeDecodeMode === 'decode' ? 'active' : ''}`}
+                  onClick={() => onEncodeDecodeModeChange('decode')}
+                >
+                  Decode
+                </button>
+              </div>
             </div>
-          </div>
+            <div className="toolbar-divider" />
+          </>
         )}
 
-        <div className="option-group option-group-right">
-          <button className="tool-action-btn" onClick={onToggleFullscreen} title={fullscreen ? 'Exit fullscreen' : 'Fullscreen'}>
-            {'\u26F6'}
+        <div className="toolbar-group">
+          <span className="toolbar-label">Status</span>
+          {!hasContent ? (
+            <span className="validation-badge pending">
+              <span className="validation-badge-dot" />
+              Awaiting input
+            </span>
+          ) : hasErrors || formatError ? (
+            <span className="validation-badge invalid">
+              <span className="validation-badge-dot" />
+              {errors.length} {errors.length === 1 ? 'error' : 'errors'}
+            </span>
+          ) : hasValidOutput ? (
+            <span className="validation-badge valid">
+              <span className="validation-badge-dot" />
+              Valid
+            </span>
+          ) : null}
+        </div>
+
+        <div className="toolbar-spacer" />
+
+        <div className="toolbar-group">
+          <button className="toolbar-btn" onClick={handleFileUpload} title="Upload file">
+            &#128194; Upload
           </button>
-          <button className="tool-action-btn" onClick={onClear}>
-            Clear
+          <input
+            ref={fileInputRef}
+            type="file"
+                accept=".json,.xml,.html,.css,.js,.sql,.yaml,.yml,.csv,.properties,.ini,.txt,.md"
+            style={{ display: 'none' }}
+            onChange={handleFileSelected}
+          />
+        </div>
+        <div className="toolbar-divider" />
+        <div className="toolbar-group">
+          <button className="toolbar-btn" onClick={onToggleFullscreen} title={fullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}>
+            {fullscreen ? '\u2199' : '\u26F6'}
+          </button>
+          <button className="toolbar-btn" onClick={onClear}>
+            &#10005; Clear
           </button>
         </div>
       </div>
 
       <div ref={editorsRef} className="tool-editors">
-        <div className="tool-editor-pane" style={{ width: `${leftRatio * 100}%`, flex: 'none' }}>
-          <div className="pane-header">
-            <span className="pane-title">{inputLabel}</span>
-            <div className="pane-actions">
-              <button className="tool-action-btn" onClick={handleFileUpload} title="Upload file">
-                Upload
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".json,.xml,.html,.css,.js,.sql,.yaml,.yml,.csv,.ini,.txt,.md"
-                style={{ display: 'none' }}
-                onChange={handleFileSelected}
-              />
-            </div>
+        <div className="editor-pane editor-pane--input" style={{ width: `${leftRatio * 100}%`, flex: 'none' }}>
+          <div className="editor-pane-header">
+            <span className="editor-pane-title">
+              <span className="editor-pane-indicator" />
+              {inputLabel}
+            </span>
           </div>
-          <div className="pane-editor">
+          <div className="editor-pane-body">
             <Editor
               height="100%"
               language={inputLang}
@@ -343,44 +399,55 @@ export function ToolPage({
               options={{
                 minimap: { enabled: false },
                 fontSize: 13,
-                fontFamily: "var(--font-mono)",
+                fontFamily: "'JetBrains Mono', 'SF Mono', 'Fira Code', monospace",
                 lineNumbers: 'on',
-                renderLineHighlight: 'all',
+                renderLineHighlight: 'none',
                 scrollBeyondLastLine: false,
                 automaticLayout: true,
                 tabSize: 2,
                 wordWrap: 'on',
                 folding: true,
-                bracketPairColorization: { enabled: true },
-                autoClosingBrackets: 'always',
-                autoClosingQuotes: 'always',
-                matchBrackets: 'always',
+                bracketPairColorization: { enabled: false },
+                matchBrackets: 'never',
+                selectionHighlight: true,
+                occurrencesHighlight: 'off',
                 codeLens: false,
-                suggestOnTriggerCharacters: true,
+                suggestOnTriggerCharacters: false,
                 quickSuggestions: false,
                 formatOnPaste: false,
                 smoothScrolling: true,
-                cursorBlinking: 'smooth',
-                cursorSmoothCaretAnimation: 'on',
-                padding: { top: 8 },
-                glyphMargin: true,
+                cursorBlinking: 'solid',
+                cursorSmoothCaretAnimation: 'off',
+                padding: { top: 12 },
+                glyphMargin: false,
+                lineNumbersMinChars: 3,
+                hideCursorInOverviewRuler: true,
+                overviewRulerLanes: 0,
               }}
             />
           </div>
         </div>
-        <div className="resizer" onPointerDown={onResizerPointerDown} />
 
-        <div className="tool-editor-pane" style={{ flex: '1', width: 0 }}>
-          <div className="pane-header">
-            <span className="pane-title">
+        <div className="editor-resizer" onPointerDown={onResizerPointerDown}>
+          <div className="editor-resizer-track" />
+        </div>
+
+        <div className="editor-pane editor-pane--output" style={{ flex: '1', width: 0 }}>
+          <div className="editor-pane-header">
+            <span className="editor-pane-title">
+              <span className="editor-pane-indicator" />
               {isConverter ? outputLabel : 'Output'}
             </span>
-            <div className="pane-actions">
-              <button className="tool-action-btn" onClick={handleCopy}>Copy</button>
-              <button className="tool-action-btn" onClick={handleDownload}>Download</button>
+            <div className="editor-pane-actions">
+              <button className="editor-pane-btn" onClick={handleCopy} title="Copy to clipboard">
+                &#128203; Copy
+              </button>
+              <button className="editor-pane-btn" onClick={handleDownload} title="Download output">
+                &#11015; Download
+              </button>
             </div>
           </div>
-          <div className="pane-editor">
+          <div className="editor-pane-body">
             {isMarkdown ? (
               <div
                 ref={previewRef}
@@ -391,25 +458,33 @@ export function ToolPage({
               <Editor
                 height="100%"
                 language={outputLang}
-                value={output}
-                theme={monacoTheme}
-                onMount={handleOutputMount}
+                    value={output}
+                    theme={monacoTheme}
+                    onMount={handleOutputMount}
                 options={{
                   readOnly: true,
                   minimap: { enabled: false },
                   fontSize: 13,
-                  fontFamily: "var(--font-mono)",
+                  fontFamily: "'JetBrains Mono', 'SF Mono', 'Fira Code', monospace",
                   lineNumbers: 'on',
-                  renderLineHighlight: 'all',
+                  renderLineHighlight: 'none',
                   scrollBeyondLastLine: false,
                   automaticLayout: true,
                   tabSize: 2,
                   wordWrap: 'on',
                   folding: true,
-                  bracketPairColorization: { enabled: true },
+                  bracketPairColorization: { enabled: false },
+                  matchBrackets: 'never',
+                  selectionHighlight: false,
+                  occurrencesHighlight: 'off',
                   smoothScrolling: true,
-                  padding: { top: 8 },
-                  glyphMargin: true,
+                  cursorBlinking: 'solid',
+                  cursorSmoothCaretAnimation: 'off',
+                  padding: { top: 12 },
+                  glyphMargin: false,
+                  lineNumbersMinChars: 3,
+                  hideCursorInOverviewRuler: true,
+                  overviewRulerLanes: 0,
                 }}
               />
             )}
@@ -419,25 +494,35 @@ export function ToolPage({
 
       {formatError && (
         <div className="tool-format-error">
-          <span className="error-icon">&#10007;</span>
+          <span className="tool-format-error-icon">!</span>
           <span>{formatError}</span>
         </div>
       )}
 
-      {errors.length > 0 && (
-        <div className="tool-validation-errors">
-          <div className="validation-errors-header">
-            <span className="validation-errors-title">Problems ({errors.length})</span>
+      {hasErrors && (
+        <div className="diagnostics-panel">
+          <div className="diagnostics-header" onClick={() => setShowDiagnostics(d => !d)}>
+            <div className="diagnostics-header-left">
+              <span className="diagnostics-title">
+                &#9888; Problems
+              </span>
+              <span className="diagnostics-count">{errors.length}</span>
+            </div>
+            <span className={`diagnostics-toggle ${showDiagnostics ? 'open' : ''}`}>
+              &#9660;
+            </span>
           </div>
-          <div className="validation-errors-body">
-            {errors.map((err, i) => (
-              <div className="error-item" key={i}>
-                <span className="error-icon">&#10007;</span>
-                <span className="error-loc">Line {err.line}, Col {err.column}</span>
-                <span className="error-msg">{err.message}</span>
-              </div>
-            ))}
-          </div>
+          {showDiagnostics && (
+            <div className="diagnostics-body">
+              {errors.map((err, i) => (
+                <div className="diagnostics-item" key={i}>
+                  <span className="diagnostics-item-marker" />
+                  <span className="diagnostics-item-loc">Ln {err.line}, Col {err.column}</span>
+                  <span className="diagnostics-item-msg">{err.message}</span>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>

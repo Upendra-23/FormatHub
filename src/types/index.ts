@@ -4,12 +4,13 @@ export type FormatType =
   | 'json' | 'xml' | 'sql' | 'html'
   | 'css' | 'javascript' | 'markdown'
   | 'base64' | 'url'
-  | 'yaml' | 'csv';
+  | 'yaml' | 'csv' | 'properties';
    
 export type ConverterId =
   | 'xml-to-json' | 'json-to-xml'
   | 'csv-to-json' | 'json-to-csv'
-  | 'yaml-to-json' | 'json-to-yaml';
+  | 'yaml-to-json' | 'json-to-yaml'
+  | 'properties-to-yaml';
 
 export type ActionMode = 'format' | 'minify';
 
@@ -33,6 +34,7 @@ export const FORMATS: FormatOption[] = [
   { label: 'URL', value: 'url', supportsFormat: false, supportsMinify: false, language: 'plaintext' },
   { label: 'YAML', value: 'yaml', supportsFormat: false, supportsMinify: false, language: 'yaml' },
   { label: 'CSV', value: 'csv', supportsFormat: false, supportsMinify: false, language: 'csv' },
+  { label: 'Properties', value: 'properties', supportsFormat: false, supportsMinify: false, language: 'properties' },
 ];
 
 export interface ValidationError {
@@ -73,6 +75,7 @@ export const CONVERTERS: ConverterDef[] = [
   { id: 'json-to-csv', label: 'JSON to CSV Converter', fromFormat: 'json', toFormat: 'csv', fromLabel: 'JSON', toLabel: 'CSV' },
   { id: 'yaml-to-json', label: 'YAML to JSON Converter', fromFormat: 'yaml', toFormat: 'json', fromLabel: 'YAML', toLabel: 'JSON' },
   { id: 'json-to-yaml', label: 'JSON to YAML Converter', fromFormat: 'json', toFormat: 'yaml', fromLabel: 'JSON', toLabel: 'YAML' },
+  { id: 'properties-to-yaml', label: 'Properties to YAML Converter', fromFormat: 'properties', toFormat: 'yaml', fromLabel: 'Properties', toLabel: 'YAML' },
 ];
 
 export interface NavCategory {
@@ -93,6 +96,7 @@ export const NAV_CATEGORIES: NavCategory[] = [
       { label: 'Markdown Preview', value: 'markdown', section: 'formatter' },
       { label: 'Base64 Encoder / Decoder', value: 'base64', section: 'formatter' },
       { label: 'URL Encoder / Decoder', value: 'url', section: 'formatter' },
+      { label: 'Properties Formatter', value: 'properties', section: 'formatter' },
     ],
   },
   {
@@ -104,6 +108,7 @@ export const NAV_CATEGORIES: NavCategory[] = [
       { label: 'JSON to CSV Converter', value: 'json-to-csv', section: 'converter' },
       { label: 'YAML to JSON Converter', value: 'yaml-to-json', section: 'converter' },
       { label: 'JSON to YAML Converter', value: 'json-to-yaml', section: 'converter' },
+      { label: 'Properties to YAML Converter', value: 'properties-to-yaml', section: 'converter' },
     ],
   },
 ];
@@ -153,6 +158,10 @@ export const TOOL_DESCRIPTIONS: Record<FormatType, { title: string; description:
     title: 'CSV Converter',
     description: 'Converts CSV data to and from JSON format.',
   },
+  properties: {
+    title: 'Properties Formatter',
+    description: 'Formats and sorts .properties files — ideal for Java/Spring application configuration.',
+  },
 };
 
 export const CONVERTER_DESCRIPTIONS: Record<ConverterId, { title: string; description: string }> = {
@@ -179,5 +188,9 @@ export const CONVERTER_DESCRIPTIONS: Record<ConverterId, { title: string; descri
   'json-to-yaml': {
     title: 'JSON to YAML Converter',
     description: 'Converts JSON data into YAML format with clean indentation.',
+  },
+  'properties-to-yaml': {
+    title: 'Properties to YAML Converter',
+    description: 'Converts Java/Spring .properties files into YAML format suitable for application.yml.',
   },
 };

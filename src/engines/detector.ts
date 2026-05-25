@@ -34,6 +34,11 @@ export function detectFormat(input: string): FormatType | null {
     return 'sql';
   }
 
+  // Properties — key=value or key:value patterns, no braces
+  if (/^[a-zA-Z][a-zA-Z0-9.]*\s*[=:]\s*\S/.test(firstLine) && !trimmed.includes('{')) {
+    return 'properties';
+  }
+
   // CSS — { } with property:value pattern
   if (trimmed.includes('{') && trimmed.includes('}') && /[a-z-]+\s*:\s*\S/.test(trimmed)) {
     if (!firstLine.startsWith('function') && !firstLine.startsWith('const ') && !firstLine.startsWith('let ')) {
