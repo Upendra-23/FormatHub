@@ -1,14 +1,11 @@
-import { useState, useEffect, useCallback } from 'react';
-import { MONACO_THEME_MAP } from '../editor/themes';
+import { useState, useEffect } from 'react';
 
-export type ThemeName = 'light' | 'dark' | 'monokai' | 'darcula';
-
-const THEMES: ThemeName[] = ['light', 'dark', 'monokai', 'darcula'];
+export type ThemeName = 'light' | 'dark';
 
 export function useTheme() {
   const [theme, setTheme] = useState<ThemeName>(() => {
     const saved = localStorage.getItem('format-studio-theme') as ThemeName | null;
-    if (saved && THEMES.includes(saved)) return saved;
+    if (saved === 'light' || saved === 'dark') return saved;
     return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
   });
 
@@ -17,12 +14,8 @@ export function useTheme() {
     localStorage.setItem('format-studio-theme', theme);
   }, [theme]);
 
-  const isDark = theme !== 'light';
-  const toggleTheme = useCallback(() => {
-    setTheme(p => (p === 'light' ? 'dark' : 'light'));
-  }, []);
+  const isDark = theme === 'dark';
+  const monacoTheme = isDark ? 'vs-dark' : 'vs';
 
-  const monacoTheme = MONACO_THEME_MAP[theme] || 'vs-dark';
-
-  return { isDark, theme, setTheme, toggleTheme, monacoTheme };
+  return { isDark, theme, setTheme, monacoTheme };
 }
