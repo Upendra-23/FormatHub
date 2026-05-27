@@ -32,6 +32,7 @@ const DEFAULT_SAMPLES: Record<string, string> = {
   'json-to-yaml': JSON.stringify({ name: 'Alice', age: 30, city: 'New York' }, null, 2),
   properties: '# Application configuration\napp.name=FormatHub\napp.version=2.0\napp.features=format,validate,convert\nspring.datasource.url=jdbc:postgresql://localhost:5432/formathub\nspring.datasource.username=admin\nspring.datasource.password=\nserver.port=8080\nlogging.level.root=INFO\nlogging.level.com.formathub=DEBUG',
   'properties-to-yaml': '# Application configuration\napp.name=FormatHub\napp.version=2.0\napp.features=format,validate,convert\nspring.datasource.url=jdbc:postgresql://localhost:5432/formathub\nspring.datasource.username=admin\nspring.datasource.password=\nserver.port=8080\nlogging.level.root=INFO\nlogging.level.com.formathub=DEBUG',
+  'yaml-to-properties': 'app:\n  name: FormatHub\n  version: 2.0\n  features: format,validate,convert\nspring:\n  datasource:\n    url: jdbc:postgresql://localhost:5432/formathub\n    username: admin\n    password: \'\'\nserver:\n  port: 8080\nlogging:\n  level:\n    root: INFO\n    com:\n      formathub: DEBUG',
 };
 
 function deriveSection(toolId: string): AppSection {
@@ -46,6 +47,7 @@ export default function App() {
   const { theme, setTheme, monacoTheme } = useTheme();
   const [toolId, setToolId] = useState('json');
   const [fullscreen, setFullscreen] = useState(false);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [cmdPaletteOpen, setCmdPaletteOpen] = useState(false);
   const section = deriveSection(toolId);
 
@@ -124,7 +126,7 @@ export default function App() {
         onOpenCommandPalette={() => setCmdPaletteOpen(true)}
       />
       <div className="app-body">
-        <Sidebar activeFormat={toolId} onSelect={handleToolChange} collapsed={false} />
+        <Sidebar activeFormat={toolId} onSelect={handleToolChange} collapsed={!sidebarOpen} onToggle={() => setSidebarOpen(o => !o)} />
         <main className="main-content">
           <div className="main-inner">
             {isDiff ? (

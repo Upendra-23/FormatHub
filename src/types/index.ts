@@ -10,7 +10,8 @@ export type ConverterId =
   | 'xml-to-json' | 'json-to-xml'
   | 'csv-to-json' | 'json-to-csv'
   | 'yaml-to-json' | 'json-to-yaml'
-  | 'properties-to-yaml';
+  | 'properties-to-yaml'
+  | 'yaml-to-properties';
 
 export type ActionMode = 'format' | 'minify';
 
@@ -76,6 +77,7 @@ export const CONVERTERS: ConverterDef[] = [
   { id: 'yaml-to-json', label: 'YAML to JSON Converter', fromFormat: 'yaml', toFormat: 'json', fromLabel: 'YAML', toLabel: 'JSON' },
   { id: 'json-to-yaml', label: 'JSON to YAML Converter', fromFormat: 'json', toFormat: 'yaml', fromLabel: 'JSON', toLabel: 'YAML' },
   { id: 'properties-to-yaml', label: 'Properties to YAML Converter', fromFormat: 'properties', toFormat: 'yaml', fromLabel: 'Properties', toLabel: 'YAML' },
+  { id: 'yaml-to-properties', label: 'YAML to Properties Converter', fromFormat: 'yaml', toFormat: 'properties', fromLabel: 'YAML', toLabel: 'Properties' },
 ];
 
 export interface NavCategory {
@@ -109,10 +111,11 @@ export const NAV_CATEGORIES: NavCategory[] = [
       { label: 'YAML to JSON Converter', value: 'yaml-to-json', section: 'converter' },
       { label: 'JSON to YAML Converter', value: 'json-to-yaml', section: 'converter' },
       { label: 'Properties to YAML Converter', value: 'properties-to-yaml', section: 'converter' },
+      { label: 'YAML to Properties Converter', value: 'yaml-to-properties', section: 'converter' },
     ],
   },
   {
-    label: 'Tools',
+    label: 'Miscellaneous',
     items: [
       { label: 'File Compare', value: 'diff', section: 'diff' },
     ],
@@ -198,5 +201,9 @@ export const CONVERTER_DESCRIPTIONS: Record<ConverterId, { title: string; descri
   'properties-to-yaml': {
     title: 'Properties to YAML Converter',
     description: 'Converts Java/Spring .properties files into YAML format suitable for application.yml.',
+  },
+  'yaml-to-properties': {
+    title: 'YAML to Properties Converter',
+    description: 'Converts YAML data into flat .properties format with dot-notation keys.',
   },
 };

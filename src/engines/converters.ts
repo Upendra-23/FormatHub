@@ -242,6 +242,30 @@ export async function convertContent(
         return { output: yaml.dump(result, { indent: 2, lineWidth: -1, noRefs: true }), error: null };
       }
 
+      case 'yaml-to-properties': {
+        const doc = yaml.load(input);
+        if (typeof doc !== 'object' || doc === null) {
+          return { output: input, error: 'YAML input must be an object' };
+        }
+        const lines: string[] = [];
+        function flatten(obj: unknown, prefix: string) {
+          if (typeof obj === 'object' && obj !== null && !Array.isArray(obj)) {
+            for (const [key, value] of Object.entries(obj)) {
+              const fullKey = prefix ? `${prefix}.${key}` : key;
+              if (typeof value === 'object' && value !== null && !Array.isArray(value) && Object.keys(value as Record<string, unknown>).length > 0) {
+                flatten(value, fullKey);
+              } else {
+                lines.push(`${fullKey}=${value === null ? '' : String(value)}`);
+              }
+            }
+          } else {
+            lines.push(`${prefix}=${obj === null ? '' : String(obj)}`);
+          }
+        }
+        flatten(doc, '');
+        return { output: lines.join('\n'), error: null };
+      }
+
       default:
         return { output: input, error: 'Unknown converter' };
     }
